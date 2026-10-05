@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/orders
+    username: fulfillx
+    password: fulfillx
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
