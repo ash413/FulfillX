@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderService {
 
     private final OrderRepository repository;
+    private final OrderEventPublisher eventPublisher;   // new
 
     @Transactional
     public OrderResponse create(CreateOrderRequest request) {
@@ -22,6 +23,11 @@ public class OrderService {
             item.setQuantity(i.quantity());
             order.addItem(item);
         }
+
+        Order saved = repository.save(order);
+
+        eventPublisher.publishOrderCreated(
+                new OrderCreatedEvent(saved.getId(), saved.getCustomerId(), request.items()));
 
         return toResponse(repository.save(order));
     }
