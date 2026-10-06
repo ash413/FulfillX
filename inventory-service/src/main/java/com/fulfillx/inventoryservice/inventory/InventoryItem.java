@@ -33,4 +33,8 @@ public class InventoryItem {
         }
         availableQuantity -= quantity;
     }
+
+    public void release(int quantity) {
+        availableQuantity += quantity;
+    }
 }

@@ -67,4 +67,14 @@ public class OrderService {
             }
         });
     }
+
+    @Transactional
+    public void confirm(Long orderId) {
+        repository.findById(orderId).ifPresent(order -> {
+            if (order.getStatus() == OrderStatus.PENDING
+                    || order.getStatus() == OrderStatus.STOCK_RESERVED) {
+                order.setStatus(OrderStatus.CONFIRMED);
+            }
+        });
+    }
 }

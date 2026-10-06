@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,20 @@ public class InventoryService {
             reservation.setQuantity(line.quantity());
             reservation.setStatus(ReservationStatus.RESERVED);
             reservations.save(reservation);
+        }
+    }
+
+    @Transactional
+    public void release(Long orderId) {
+        List<Reservation> held =
+                reservations.findByOrderIdAndStatus(orderId, ReservationStatus.RESERVED);
+
+        for (Reservation r : held) {
+            InventoryItem item = items.findById(r.getProductId())
+                    .orElseThrow(() -> new StockReservationException(
+                            "Unknown product " + r.getProductId()));
+            item.release(r.getQuantity());
+            r.setStatus(ReservationStatus.RELEASED);
         }
     }
 }
