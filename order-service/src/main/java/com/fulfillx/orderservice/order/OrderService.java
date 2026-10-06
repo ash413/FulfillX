@@ -48,4 +48,23 @@ public class OrderService {
                         .map(i -> new CreateOrderRequest.Item(i.getProductId(), i.getQuantity()))
                         .toList());
     }
+
+    @Transactional
+    public void markStockReserved(Long orderId) {
+        repository.findById(orderId).ifPresent(order -> {
+            if (order.getStatus() == OrderStatus.PENDING) {
+                order.setStatus(OrderStatus.STOCK_RESERVED);
+            }
+        });
+    }
+
+    @Transactional
+    public void cancel(Long orderId) {
+        repository.findById(orderId).ifPresent(order -> {
+            if (order.getStatus() == OrderStatus.PENDING
+                    || order.getStatus() == OrderStatus.STOCK_RESERVED) {
+                order.setStatus(OrderStatus.CANCELLED);
+            }
+        });
+    }
 }
