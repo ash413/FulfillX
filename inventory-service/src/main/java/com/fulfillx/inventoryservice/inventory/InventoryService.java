@@ -14,11 +14,12 @@ public class InventoryService {
 
     private final InventoryItemRepository items;
     private final ReservationRepository reservations;
+    private final IdempotencyGuard guard;
 
     @Transactional
     public void reserve(OrderCreatedEvent event) {
-        if (reservations.existsByOrderId(event.orderId())) {
-            log.info("Order {} already reserved, skipping duplicate", event.orderId());
+        if (!guard.firstTime("inventory.reserve", String.valueOf(event.orderId()))) {
+            log.info("Order {} already processed, skipping duplicate", event.orderId());
             return;
         }
 
@@ -40,6 +41,11 @@ public class InventoryService {
 
     @Transactional
     public void release(Long orderId) {
+        if (!guard.firstTime("inventory.release", String.valueOf(orderId))) {
+            log.info("Release for order {} already processed, skipping duplicate", orderId);
+            return;
+        }
+
         List<Reservation> held =
                 reservations.findByOrderIdAndStatus(orderId, ReservationStatus.RESERVED);
 

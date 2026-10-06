@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderService {
 
     private final OrderRepository repository;
-    private final OrderEventPublisher eventPublisher;   // new
+    private final OutboxWriter outbox;
 
     @Transactional
     public OrderResponse create(CreateOrderRequest request) {
@@ -26,10 +26,10 @@ public class OrderService {
 
         Order saved = repository.save(order);
 
-        eventPublisher.publishOrderCreated(
+        outbox.write("Order", saved.getId(), "order.created",
                 new OrderCreatedEvent(saved.getId(), saved.getCustomerId(), request.items()));
 
-        return toResponse(repository.save(order));
+        return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -37,16 +37,6 @@ public class OrderService {
         return repository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new OrderNotFoundException(id));
-    }
-
-    private OrderResponse toResponse(Order order) {
-        return new OrderResponse(
-                order.getId(),
-                order.getCustomerId(),
-                order.getStatus(),
-                order.getItems().stream()
-                        .map(i -> new CreateOrderRequest.Item(i.getProductId(), i.getQuantity()))
-                        .toList());
     }
 
     @Transactional
@@ -76,5 +66,15 @@ public class OrderService {
                 order.setStatus(OrderStatus.CONFIRMED);
             }
         });
+    }
+
+    private OrderResponse toResponse(Order order) {
+        return new OrderResponse(
+                order.getId(),
+                order.getCustomerId(),
+                order.getStatus(),
+                order.getItems().stream()
+                        .map(i -> new CreateOrderRequest.Item(i.getProductId(), i.getQuantity()))
+                        .toList());
     }
 }
