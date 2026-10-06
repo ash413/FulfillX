@@ -10,6 +10,17 @@ services:
     volumes:
       - order-db-data:/var/lib/postgresql/data
 
+  inventory-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: inventory
+      POSTGRES_USER: fulfillx
+      POSTGRES_PASSWORD: fulfillx
+    ports:
+      - "5434:5432"
+    volumes:
+      - inventory-db-data:/var/lib/postgresql/data
+
   kafka:
     image: apache/kafka:3.9.0
     ports:
@@ -40,3 +51,4 @@ services:
 
 volumes:
   order-db-data:
+  inventory-db-data:
