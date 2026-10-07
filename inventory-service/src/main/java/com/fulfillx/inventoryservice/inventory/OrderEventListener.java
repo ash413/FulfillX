@@ -16,7 +16,6 @@ public class OrderEventListener {
 
     private final JsonMapper jsonMapper;
     private final InventoryService inventoryService;
-    private final InventoryEventPublisher publisher;
 
     @KafkaListener(topics = "order.created")
     public void onOrderCreated(String message) {
@@ -25,10 +24,8 @@ public class OrderEventListener {
 
         try {
             reserveWithRetry(event);
-            publisher.publishReserved(new InventoryReservedEvent(event.orderId()));
-            log.info("Reserved stock for order {}", event.orderId());
         } catch (StockReservationException e) {
-            publisher.publishFailed(new InventoryFailedEvent(event.orderId(), e.getMessage()));
+            inventoryService.recordFailure(event.orderId(), e.getMessage());
             log.warn("Reservation failed for order {}: {}", event.orderId(), e.getMessage());
         }
     }

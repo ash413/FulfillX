@@ -15,6 +15,7 @@ public class InventoryService {
     private final InventoryItemRepository items;
     private final ReservationRepository reservations;
     private final IdempotencyGuard guard;
+    private final OutboxWriter outbox;
 
     @Transactional
     public void reserve(OrderCreatedEvent event) {
@@ -37,6 +38,19 @@ public class InventoryService {
             reservation.setStatus(ReservationStatus.RESERVED);
             reservations.save(reservation);
         }
+
+        outbox.write("Reservation", event.orderId(), "inventory.reserved",
+                new InventoryReservedEvent(event.orderId()));
+        log.info("Reserved stock for order {}", event.orderId());
+    }
+
+    @Transactional
+    public void recordFailure(Long orderId, String reason) {
+        if (!guard.firstTime("inventory.reserve-failed", String.valueOf(orderId))) {
+            return;
+        }
+        outbox.write("Reservation", orderId, "inventory.failed",
+                new InventoryFailedEvent(orderId, reason));
     }
 
     @Transactional
