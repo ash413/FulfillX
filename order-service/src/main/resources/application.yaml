@@ -21,3 +21,7 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  data:
+    redis:
+      host: localhost
+      port: 6380
