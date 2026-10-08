@@ -45,10 +45,15 @@ class OrderApiIntegrationTest {
         return RestClient.create("http://localhost:" + port);
     }
 
+    private String adminToken() {
+        return TestAuth.adminToken(port);
+    }
+
     private Long createOrder() {
         var request = new CreateOrderRequest(
                 382L, List.of(new CreateOrderRequest.Item(102L, 2)));
         OrderResponse created = client().post().uri("/orders")
+                .header("Authorization", "Bearer " + adminToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()
@@ -74,6 +79,7 @@ class OrderApiIntegrationTest {
         Long id = createOrder();
 
         OrderResponse fetched = client().get().uri("/orders/{id}", id)
+                .header("Authorization", "Bearer " + adminToken())
                 .retrieve()
                 .body(OrderResponse.class);
 
@@ -85,6 +91,7 @@ class OrderApiIntegrationTest {
     @Test
     void returns404ForUnknownOrder() {
         HttpStatus status = client().get().uri("/orders/999999")
+                .header("Authorization", "Bearer " + adminToken())
                 .exchange((req, res) -> HttpStatus.valueOf(res.getStatusCode().value()));
 
         assertThat(status).isEqualTo(HttpStatus.NOT_FOUND);

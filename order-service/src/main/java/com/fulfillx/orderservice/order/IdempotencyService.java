@@ -24,12 +24,16 @@ public class IdempotencyService {
     private final StringRedisTemplate redis;
     private final JsonMapper jsonMapper;
 
+    private String redisKey(Long userId, String key) {
+        return PREFIX + userId + ":" + key;
+    }
+
     public String fingerprint(CreateOrderRequest request) {
         return jsonMapper.writeValueAsString(request);
     }
 
-    public Begin begin(String key, String fingerprint) {
-        String redisKey = PREFIX + key;
+    public Begin begin(Long userId, String key, String fingerprint) {
+        String redisKey = redisKey(userId, key);
         String inProgress = jsonMapper.writeValueAsString(new Entry(fingerprint, "IN_PROGRESS", null));
 
         for (int attempt = 0; attempt < 3; attempt++) {
@@ -55,12 +59,12 @@ public class IdempotencyService {
         return new Begin(Outcome.IN_PROGRESS, null);
     }
 
-    public void complete(String key, String fingerprint, OrderResponse response) {
+    public void complete(Long userId, String key, String fingerprint, OrderResponse response) {
         String json = jsonMapper.writeValueAsString(new Entry(fingerprint, "DONE", response));
-        redis.opsForValue().set(PREFIX + key, json, RESULT_TTL);
+        redis.opsForValue().set(redisKey(userId, key), json, RESULT_TTL);
     }
 
-    public void abandon(String key) {
-        redis.delete(PREFIX + key);
+    public void abandon(Long userId, String key) {
+        redis.delete(redisKey(userId, key));
     }
 }

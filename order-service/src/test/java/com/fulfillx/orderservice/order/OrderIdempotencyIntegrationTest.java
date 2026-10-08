@@ -58,6 +58,7 @@ class OrderIdempotencyIntegrationTest {
 
     private ResponseEntity<OrderResponse> post(CreateOrderRequest request, String key) {
         return client().post().uri("/orders")
+                .header("Authorization", "Bearer " + TestAuth.adminToken(port))
                 .header("Idempotency-Key", key)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
@@ -94,6 +95,7 @@ class OrderIdempotencyIntegrationTest {
         post(request(903L), key);
 
         int status = client().post().uri("/orders")
+                .header("Authorization", "Bearer " + TestAuth.adminToken(port))
                 .header("Idempotency-Key", key)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request(904L))

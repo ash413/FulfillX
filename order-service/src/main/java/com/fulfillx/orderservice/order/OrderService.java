@@ -4,6 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -37,6 +41,13 @@ public class OrderService {
         return repository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new OrderNotFoundException(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> list(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")))
+                .map(this::toResponse)
+                .getContent();
     }
 
     @Transactional
